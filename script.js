@@ -16,7 +16,7 @@ canvas.addEventListener('mousemove', draw);
 
 function draw(event) {
     if (!drawing) return;
-    ctx.lineWidth = 10; // This sets the thickness of the line
+    ctx.lineWidth = 50; // This sets the thickness of the line
     ctx.lineCap = 'round';
     ctx.strokeStyle = 'black';
 
