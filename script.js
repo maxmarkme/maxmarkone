@@ -3,9 +3,22 @@ const ctx = canvas.getContext('2d');
 let drawing = false;
 let isDistorted = false;
 let storedImageData;
+let draggingControlPoint = null;
+let controlPoints = [
+    { x: 0, y: 0 },
+    { x: canvas.width, y: 0 },
+    { x: canvas.width, y: canvas.height },
+    { x: 0, y: canvas.height }
+];
 
 canvas.addEventListener('mousedown', (e) => {
-    if (isDistorted) {
+    const mouseX = e.clientX - canvas.offsetLeft;
+    const mouseY = e.clientY - canvas.offsetTop;
+    const clickedPoint = getClickedControlPoint(mouseX, mouseY);
+    
+    if (clickedPoint) {
+        draggingControlPoint = clickedPoint;
+    } else if (isDistorted) {
         distortStart(e);
     } else {
         drawing = true;
@@ -14,14 +27,25 @@ canvas.addEventListener('mousedown', (e) => {
 
 canvas.addEventListener('mouseup', () => {
     drawing = false;
+    draggingControlPoint = null;
     storeCurrentDrawing();
     ctx.beginPath();
 });
 
-canvas.addEventListener('mousemove', draw);
+canvas.addEventListener('mousemove', (e) => {
+    const mouseX = e.clientX - canvas.offsetLeft;
+    const mouseY = e.clientY - canvas.offsetTop;
+    
+    if (draggingControlPoint) {
+        draggingControlPoint.x = mouseX;
+        draggingControlPoint.y = mouseY;
+        // TODO: Apply distortion based on control points
+    } else if (drawing) {
+        draw(e);
+    }
+});
 
 function draw(event) {
-    if (!drawing) return;
     ctx.lineWidth = 50; 
     ctx.lineCap = 'round';
     ctx.strokeStyle = 'black';
@@ -65,4 +89,14 @@ function distortStart(event) {
     }
 
     ctx.putImageData(imageData, 0, 0);
+}
+
+function getClickedControlPoint(x, y) {
+    const tolerance = 10;
+    for (let point of controlPoints) {
+        if (Math.abs(point.x - x) < tolerance && Math.abs(point.y - y) < tolerance) {
+            return point;
+        }
+    }
+    return null;
 }
