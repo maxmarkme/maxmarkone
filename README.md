@@ -8,7 +8,7 @@ Digital Drawing Canvas: Set your mark, adjust its perspective, and in future ite
 Gallery: Showcases all the artworks. Share your creations across your social media, with a primary focus on Instagram. (Note: An active Instagram account and email are prerequisites for saving, sharing, owning.)
 
 How to Use
-Navigate to the website: https://maxmark.github.io/maxmarkone/.
+Navigate to the website: https://maxmarkme.github.io/maxmarkone/.
 Engage with the digital canvas to bring your artwork to life.
 Explore the gallery to appreciate the artworks.
 Hosting
