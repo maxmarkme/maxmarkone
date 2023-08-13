@@ -4,8 +4,12 @@ let drawing = false;
 let isDistorted = false;
 let storedImageData;
 
-canvas.addEventListener('mousedown', () => {
-    drawing = true;
+canvas.addEventListener('mousedown', (e) => {
+    if (isDistorted) {
+        distortStart(e);
+    } else {
+        drawing = true;
+    }
 });
 
 canvas.addEventListener('mouseup', () => {
@@ -33,17 +37,32 @@ function storeCurrentDrawing() {
 }
 
 function toggleDistortion() {
-    if (isDistorted) {
-        ctx.putImageData(storedImageData, 0, 0);
-    } else {
-        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        // Apply distortion effect (this is a basic example, you can customize as needed)
-        for (let i = 0; i < imgData.data.length; i += 4) {
-            imgData.data[i] = 255 - imgData.data[i];
-            imgData.data[i + 1] = 255 - imgData.data[i + 1];
-            imgData.data[i + 2] = 255 - imgData.data[i + 2];
-        }
-        ctx.putImageData(imgData, 0, 0);
-    }
     isDistorted = !isDistorted;
+}
+
+function distortStart(event) {
+    const x = event.clientX - canvas.offsetLeft;
+    const y = event.clientY - canvas.offsetTop;
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+
+    for (let i = 0; i < data.length; i += 4) {
+        const row = Math.floor(i / 4 / canvas.width);
+        const col = (i / 4) % canvas.width;
+        const dx = col - x;
+        const dy = row - y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < 100) {
+            const factor = (100 - dist) * 0.2;
+            const newx = col + dx * factor;
+            const newy = row + dy * factor;
+            const newPixel = (Math.floor(newy) * canvas.width + Math.floor(newx)) * 4;
+            data[i] = data[newPixel];
+            data[i + 1] = data[newPixel + 1];
+            data[i + 2] = data[newPixel + 2];
+        }
+    }
+
+    ctx.putImageData(imageData, 0, 0);
 }
