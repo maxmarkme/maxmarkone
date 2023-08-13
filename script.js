@@ -1,6 +1,7 @@
-const canvas = document.getElementById('drawingCanvas');
+const canvas = document.getElementById('artCanvas');
 const ctx = canvas.getContext('2d');
 let drawing = false;
+let distort = false;
 
 canvas.addEventListener('mousedown', () => {
     drawing = true;
@@ -15,7 +16,7 @@ canvas.addEventListener('mousemove', draw);
 
 function draw(event) {
     if (!drawing) return;
-    ctx.lineWidth = 5;
+    ctx.lineWidth = 10; // This sets the thickness of the line
     ctx.lineCap = 'round';
     ctx.strokeStyle = 'black';
 
@@ -25,14 +26,19 @@ function draw(event) {
     ctx.moveTo(event.clientX - canvas.offsetLeft, event.clientY - canvas.offsetTop);
 }
 
-document.getElementById('clearBtn').addEventListener('click', () => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-});
+function toggleDistortion() {
+    distort = !distort;
+    if (distort) {
+        ctx.setTransform(1, 0.5, -0.5, 1, 0, 0); // This is a basic skew for demonstration
+    } else {
+        ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset to default
+    }
+}
 
-document.getElementById('saveBtn').addEventListener('click', () => {
-    const dataURL = canvas.toDataURL();
-    const a = document.createElement('a');
-    a.href = dataURL;
-    a.download = 'drawing.png';
-    a.click();
-});
+function saveDrawing() {
+    alert('Save functionality to be implemented!');
+}
+
+function postToSocialMedia() {
+    alert('Social media posting to be implemented!');
+}
