@@ -5,10 +5,10 @@ In a rapidly evolving world filled with countless opportunities to leave an impr
 Features
 Digital Drawing Canvas: Set your mark, adjust its perspective, and in future iterations, own it in .obj format.
 
-Gallery: Showcases all the artworks. Share your creations across your social media, with a primary focus on Instagram. (Note: An active Instagram account and email are prerequisites for sharing.)
+Gallery: Showcases all the artworks. Share your creations across your social media, with a primary focus on Instagram. (Note: An active Instagram account and email are prerequisites for saving, sharing, owning.)
 
 How to Use
-Navigate to the website: https://username.github.io/repository-name/ (Make sure to replace username with your GitHub username and repository-name with the name of your repository).
+Navigate to the website: https://maxmark.github.io/maxmarkone/.
 Engage with the digital canvas to bring your artwork to life.
 Explore the gallery to appreciate the artworks.
 Hosting
