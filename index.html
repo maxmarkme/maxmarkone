@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Maxim van Marke's Art - Portfolio</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<style>
+	/* CSS from the previous structure will go here */
+	</style>
+</head>
+<body>
+	<header>
+		<h1>Maxim van Marke's Art</h1>
+		<nav>
+			<ul>
+				<li><a href="#about">About</a></li>
+				<li><a href="#gallery">Gallery</a></li>
+			</ul>
+		</nav>
+	</header>
+	<main>
+		<section id="about">
+			<h2>About</h2>
+			<p>Some information about the artist and their work.</p>
+			<h2>Draw Your Art</h2>
+			<p>Draw on the canvas below and save your masterpiece!</p>
+			<canvas id="artCanvas" width="500" height="500"></canvas>
+			<br>
+			<button id="saveDrawing">Save Drawing</button>
+			<button id="postToSocial">Post to Social Media</button>
+		</section>
+		<section id="gallery">
+			<h2>Gallery</h2>
+			<p>Discover creations from other artists and join the community.</p>
+			<div class="gallery">
+				<!-- Loaded drawings will appear here -->
+			</div>
+		</section>
+	</main>
+	<footer>
+		<p>&copy; Maxim van Marke's Art</p>
+	</footer>
+	<script>
+		// Drawing functionality
+		const canvas = document.getElementById('artCanvas');
+		const ctx = canvas.getContext('2d');
+		let drawing = false;
+
+		canvas.addEventListener('mousedown', () => {
+			drawing = true;
+		});
+
+		canvas.addEventListener('mouseup', () => {
+			drawing = false;
+			ctx.beginPath();
+		});
+
+		canvas.addEventListener('mousemove', draw);
+
+		function draw(event) {
+			if (!drawing) return;
+			ctx.lineWidth = 5;
+			ctx.lineCap = 'round';
+			ctx.strokeStyle = 'black';
+
+			ctx.lineTo(event.clientX - canvas.offsetLeft, event.clientY - canvas.offsetTop);
+			ctx.stroke();
+			ctx.beginPath();
+			ctx.moveTo(event.clientX - canvas.offsetLeft, event.clientY - canvas.offsetTop);
+		}
+
+		// Save and post functionality can be added later
+		document.getElementById('saveDrawing').addEventListener('click', () => {
+			alert('Save functionality to be implemented!');
+		});
+
+		document.getElementById('postToSocial').addEventListener('click', () => {
+			alert('Social media posting to be implemented!');
+		});
+	</script>
+</body>
+</html>
