@@ -1,7 +1,7 @@
 const canvas = document.getElementById('artCanvas');
 const ctx = canvas.getContext('2d');
 let drawing = false;
-let distort = false;
+let isDistorted = false;
 
 canvas.addEventListener('mousedown', () => {
     drawing = true;
@@ -27,12 +27,12 @@ function draw(event) {
 }
 
 function toggleDistortion() {
-    distort = !distort;
-    if (distort) {
-        ctx.setTransform(1, 0.5, -0.5, 1, 0, 0); // This is a basic skew for demonstration
+    if (isDistorted) {
+        ctx.globalCompositeOperation = 'source-over'; // Default value
     } else {
-        ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset to default
+        ctx.globalCompositeOperation = 'difference'; // This will create a "negative" effect on overlap
     }
+    isDistorted = !isDistorted;
 }
 
 function saveDrawing() {
