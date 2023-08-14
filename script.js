@@ -21,19 +21,18 @@ varying vec2 vTextureCoord;
 uniform sampler2D uSampler;
 uniform vec2 controlPoints[4];
 
-vec2 distort(vec2 uv, vec2 controlPoint) {
-    float dist = distance(uv, controlPoint);
-    if (dist < 0.1) {
-        return uv + (controlPoint - uv) * (0.1 - dist) * 10.0;
-    }
-    return uv;
+vec2 barycentricDistort(vec2 uv, vec2 a, vec2 b, vec2 c) {
+    float detT = (b.y - c.y) * (a.x - c.x) + (c.x - b.x) * (a.y - c.y);
+    float w1 = ((b.y - c.y) * (uv.x - c.x) + (c.x - b.x) * (uv.y - c.y)) / detT;
+    float w2 = ((c.y - a.y) * (uv.x - c.x) + (a.x - c.x) * (uv.y - c.y)) / detT;
+    float w3 = 1.0 - w1 - w2;
+    return w1 * a + w2 * b + w3 * c;
 }
 
 void main(void) {
     vec2 uv = vTextureCoord;
-    for (int i = 0; i < 4; i++) {
-        uv = distort(uv, controlPoints[i]);
-    }
+    uv = barycentricDistort(uv, controlPoints[0], controlPoints[1], controlPoints[2]);
+    uv = barycentricDistort(uv, controlPoints[2], controlPoints[3], controlPoints[0]);
     gl_FragColor = texture2D(uSampler, uv);
 }
 `;
