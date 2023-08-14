@@ -1,9 +1,7 @@
 const canvas = document.getElementById('artCanvas');
 const ctx = canvas.getContext('2d');
 let drawing = false;
-let storedImageData;
-
-let draggingControlPoint = null;
+let points = [];
 let controlPoints = [
     { x: 0, y: 0 },
     { x: canvas.width, y: 0 },
@@ -12,67 +10,29 @@ let controlPoints = [
 ];
 
 canvas.addEventListener('mousedown', (e) => {
-    const mouseX = e.clientX - canvas.offsetLeft;
-    const mouseY = e.clientY - canvas.offsetTop;
-    const clickedPoint = getClickedControlPoint(mouseX, mouseY);
-    
-    if (clickedPoint) {
-        draggingControlPoint = clickedPoint;
-    } else {
-        drawing = true;
-        ctx.beginPath();
-        ctx.moveTo(mouseX, mouseY);
-    }
+    drawing = true;
+    points.push({ x: e.clientX - canvas.offsetLeft, y: e.clientY - canvas.offsetTop });
 });
 
 canvas.addEventListener('mouseup', () => {
     drawing = false;
-    draggingControlPoint = null;
-    storeCurrentDrawing();
-    drawControlPoints();
 });
 
 canvas.addEventListener('mousemove', (e) => {
-    const mouseX = e.clientX - canvas.offsetLeft;
-    const mouseY = e.clientY - canvas.offsetTop;
-    
-    if (draggingControlPoint) {
-        draggingControlPoint.x = mouseX;
-        draggingControlPoint.y = mouseY;
-        redrawCanvas();
-        drawControlPoints();
-    } else if (drawing) {
-        draw(e);
+    if (drawing) {
+        points.push({ x: e.clientX - canvas.offsetLeft, y: e.clientY - canvas.offsetTop });
+        draw();
     }
 });
 
-function draw(event) {
-    ctx.lineWidth = 5; 
-    ctx.lineCap = 'round';
-    ctx.strokeStyle = 'black';
-
-    ctx.lineTo(event.clientX - canvas.offsetLeft, event.clientY - canvas.offsetTop);
-    ctx.stroke();
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.beginPath();
-    ctx.moveTo(event.clientX - canvas.offsetLeft, event.clientY - canvas.offsetTop);
-}
-
-function storeCurrentDrawing() {
-    storedImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-}
-
-function redrawCanvas() {
-    ctx.putImageData(storedImageData, 0, 0);
-}
-
-function getClickedControlPoint(x, y) {
-    const tolerance = 10;
-    for (let point of controlPoints) {
-        if (Math.abs(point.x - x) < tolerance && Math.abs(point.y - y) < tolerance) {
-            return point;
-        }
+    for (let point of points) {
+        ctx.lineTo(point.x, point.y);
+        ctx.stroke();
     }
-    return null;
+    drawControlPoints();
 }
 
 function drawControlPoints() {
@@ -84,6 +44,10 @@ function drawControlPoints() {
     }
 }
 
+function resetCanvas() {
+    points = [];
+    draw();
+}
+
 // Initially draw the control points
 drawControlPoints();
-
