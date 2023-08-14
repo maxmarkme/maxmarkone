@@ -11,7 +11,7 @@ const controlPoints = [
     { x: 0, y: canvas.height }
 ];
 
-canvas.onmousedown = (e) => {
+canvas.addEventListener('mousedown', (e) => {
     const mouseX = e.clientX - canvas.offsetLeft;
     const mouseY = e.clientY - canvas.offsetTop;
     const clickedPoint = getClickedControlPoint(mouseX, mouseY);
@@ -23,17 +23,17 @@ canvas.onmousedown = (e) => {
         ctx.beginPath();
         ctx.moveTo(mouseX, mouseY);
     }
-};
+});
 
-canvas.onmouseup = () => {
+canvas.addEventListener('mouseup', () => {
     drawing = false;
     draggingControlPoint = null;
     storeCurrentDrawing();
     drawControlPoints();
     applyDistortion();
-};
+});
 
-canvas.onmousemove = (e) => {
+canvas.addEventListener('mousemove', (e) => {
     const mouseX = e.clientX - canvas.offsetLeft;
     const mouseY = e.clientY - canvas.offsetTop;
     
@@ -45,12 +45,14 @@ canvas.onmousemove = (e) => {
     } else if (drawing) {
         draw(e);
     }
-};
+});
 
 function draw(event) {
+    if (!drawing) return;
     ctx.lineWidth = 100;
     ctx.lineCap = 'round';
     ctx.strokeStyle = 'black';
+
     ctx.lineTo(event.clientX - canvas.offsetLeft, event.clientY - canvas.offsetTop);
     ctx.stroke();
     ctx.beginPath();
