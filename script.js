@@ -93,5 +93,20 @@ function drawControlPoints() {
 }
 
 function applyDistortion() {
-    const texture = fx.canvas().texture(canvas);
+    const fxCanvas = fx.canvas();
+    const texture = fxCanvas.texture(canvas);
     const canvasQuad = [0, 0, canvas.width, 0, canvas.width, canvas.height, 0, canvas.height];
+    const quad = [
+        controlPoints[0].x, controlPoints[0].y,
+        controlPoints[1].x, controlPoints[1].y,
+        controlPoints[2].x, controlPoints[2].y,
+        controlPoints[3].x, controlPoints[3].y
+    ];
+    fxCanvas.draw(texture).perspective(canvasQuad, quad).update();
+
+    // Transfer the distorted image from fxCanvas to our original canvas
+    ctx.drawImage(fxCanvas, 0, 0);
+}
+
+// Initially draw the control points
+drawControlPoints();
