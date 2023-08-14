@@ -15,7 +15,6 @@ canvas {
     background-color: white;
     position: relative;
     margin-top: 20px;
-    z-index: 0;
 }
 
 h1 {
@@ -27,16 +26,11 @@ h1 {
     z-index: 1;
 }
 
-button {
-    margin-top: 10px;
-    padding: 10px 15px;
-    border: none;
-    background-color: #4a4f5a;
-    color: white;
-    cursor: pointer;
-    transition: background-color 0.3s;
+p {
+    text-align: center;
+    margin-bottom: 20px;
 }
 
-button:hover {
-    background-color: #3a3f4a;
+button {
+    margin-top: 10px;
 }
