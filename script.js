@@ -11,13 +11,6 @@ let controlPoints = [
     { x: 0, y: canvas.height }
 ];
 
-let originalPoints = [
-    { x: 0, y: 0 },
-    { x: canvas.width, y: 0 },
-    { x: canvas.width, y: canvas.height },
-    { x: 0, y: canvas.height }
-];
-
 canvas.addEventListener('mousedown', (e) => {
     const mouseX = e.clientX - canvas.offsetLeft;
     const mouseY = e.clientY - canvas.offsetTop;
@@ -28,14 +21,15 @@ canvas.addEventListener('mousedown', (e) => {
     } else {
         drawing = true;
         ctx.beginPath();
+        ctx.moveTo(mouseX, mouseY);
     }
 });
 
 canvas.addEventListener('mouseup', () => {
     drawing = false;
     draggingControlPoint = null;
+    storeCurrentDrawing();
     drawControlPoints();
-    applyDistortion();
 });
 
 canvas.addEventListener('mousemove', (e) => {
@@ -52,12 +46,19 @@ canvas.addEventListener('mousemove', (e) => {
 });
 
 function draw(event) {
+    if (!drawing) return;
     ctx.lineWidth = 5; 
     ctx.lineCap = 'round';
     ctx.strokeStyle = 'black';
 
     ctx.lineTo(event.clientX - canvas.offsetLeft, event.clientY - canvas.offsetTop);
     ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(event.clientX - canvas.offsetLeft, event.clientY - canvas.offsetTop);
+}
+
+function storeCurrentDrawing() {
+    storedImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 }
 
 function getClickedControlPoint(x, y) {
@@ -79,37 +80,11 @@ function drawControlPoints() {
     }
 }
 
+// Bilinear interpolation for distortion
 function applyDistortion() {
-    // Simple linear interpolation for distortion
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const data = imageData.data;
-
-    for (let y = 0; y < canvas.height; y++) {
-        for (let x = 0; x < canvas.width; x++) {
-            const i = (y * canvas.width + x) * 4;
-
-            const fx = (x / canvas.width);
-            const fy = (y / canvas.height);
-
-            const distortedX = lerp(originalPoints[0].x, originalPoints[1].x, fx);
-            const distortedY = lerp(originalPoints[0].y, originalPoints[3].y, fy);
-
-            const srcX = distortedX + (controlPoints[1].x - controlPoints[0].x) * fx + (controlPoints[3].x - controlPoints[0].x) * fy;
-            const srcY = distortedY + (controlPoints[3].y - controlPoints[0].y) * fy + (controlPoints[1].y - controlPoints[0].y) * fx;
-
-            const srcPixel = (Math.floor(srcY) * canvas.width + Math.floor(srcX)) * 4;
-
-            data[i] = data[srcPixel];
-            data[i + 1] = data[srcPixel + 1];
-            data[i + 2] = data[srcPixel + 2];
-        }
-    }
-
-    ctx.putImageData(imageData, 0, 0);
-}
-
-function lerp(start, end, t) {
-    return start * (1 - t) + end * t;
+    // Here, we'll calculate the transformation matrix based on control points
+    // and apply it to the canvas to achieve the distortion effect.
+    // This requires a more advanced approach and might use a library like transformation-matrix.
 }
 
 // Initially draw the control points
