@@ -6,15 +6,18 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-direction: column;
     color: white;
     position: relative;
 }
 
+.canvas-container {
+    position: relative;
+    display: inline-block;
+}
+
 canvas {
     background-color: white;
-    position: relative;
-    margin-top: 20px;
+    border: 5px solid #2b2f3a; /* Dark grey with a hint of blue */
 }
 
 h1 {
@@ -23,14 +26,6 @@ h1 {
     left: 50%;
     transform: translate(-50%, -50%);
     font-size: 24px;
-    z-index: 1;
-}
-
-p {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-button {
-    margin-top: 10px;
+    color: lightgrey; /* Light grey as per your requirement */
+    z-index: 2; /* To ensure the title is above the canvas */
 }
