@@ -86,3 +86,4 @@ function drawControlPoints() {
 
 // Initially draw the control points
 drawControlPoints();
+
