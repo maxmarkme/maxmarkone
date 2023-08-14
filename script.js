@@ -11,80 +11,50 @@ const controlPoints = [
     { x: 0, y: canvas.height }
 ];
 
-function onOpenCvReady() {
-    document.getElementById('status').innerHTML = 'OpenCV.js is ready.';
+function initialize() {
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', endDrawing);
+    drawControlPoints();
 }
 
-canvas.addEventListener('mousedown', (e) => {
-    hideTitle();
-    const mouseX = e.clientX - canvas.offsetLeft;
-    const mouseY = e.clientY - canvas.offsetTop;
-    const clickedPoint = getClickedControlPoint(mouseX, mouseY);
-    
-    if (clickedPoint) {
-        draggingControlPoint = clickedPoint;
-    } else {
-        drawing = true;
-        ctx.beginPath();
-        ctx.moveTo(mouseX, mouseY);
-    }
-});
-
-canvas.addEventListener('mouseup', () => {
-    drawing = false;
-    draggingControlPoint = null;
-    storeCurrentDrawing();
-    drawControlPoints();
-    applyDistortion();
-});
-
-canvas.addEventListener('mousemove', (e) => {
-    const mouseX = e.clientX - canvas.offsetLeft;
-    const mouseY = e.clientY - canvas.offsetTop;
-    
-    if (draggingControlPoint) {
-        draggingControlPoint.x = mouseX;
-        draggingControlPoint.y = mouseY;
-        redrawCanvas();
-        drawControlPoints();
-    } else if (drawing) {
-        draw(e);
-    }
-});
+function startDrawing(event) {
+    drawing = true;
+    ctx.beginPath();
+    ctx.moveTo(event.clientX - canvas.offsetLeft, event.clientY - canvas.offsetTop);
+}
 
 function draw(event) {
     if (!drawing) return;
     ctx.lineWidth = 50;
     ctx.lineCap = 'round';
     ctx.strokeStyle = 'black';
-
     ctx.lineTo(event.clientX - canvas.offsetLeft, event.clientY - canvas.offsetTop);
     ctx.stroke();
     ctx.beginPath();
     ctx.moveTo(event.clientX - canvas.offsetLeft, event.clientY - canvas.offsetTop);
 }
 
-function hideTitle() {
-    const title = document.querySelector('h1');
-    title.style.display = 'none';
+function endDrawing() {
+    drawing = false;
+    applyDistortion();
 }
 
-function storeCurrentDrawing() {
-    storedImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-}
-
-function redrawCanvas() {
-    ctx.putImageData(storedImageData, 0, 0);
-}
-
-function getClickedControlPoint(x, y) {
-    const tolerance = 10;
-    for (let point of controlPoints) {
-        if (Math.abs(point.x - x) < tolerance && Math.abs(point.y - y) < tolerance) {
-            return point;
-        }
-    }
-    return null;
+function applyDistortion() {
+    let srcTri = cv.matFromArray(4, 1, cv.CV_32FC2, 
+        [0, 0, canvas.width, 0, canvas.width, canvas.height, 0, canvas.height]);
+    let dstTri = cv.matFromArray(4, 1, cv.CV_32FC2, 
+        [controlPoints[0].x, controlPoints[0].y, controlPoints[1].x, controlPoints[1].y, 
+        controlPoints[2].x, controlPoints[2].y, controlPoints[3].x, controlPoints[3].y]);
+    let warpMat = cv.getPerspectiveTransform(srcTri, dstTri);
+    let dsize = new cv.Size(canvas.width, canvas.height);
+    let src = cv.imread(canvas);
+    let dst = new cv.Mat();
+    cv.warpPerspective(src, dst, warpMat, dsize, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
+    cv.imshow(canvas, dst);
+    src.delete();
+    dst.delete();
+    warpMat.delete();
 }
 
 function drawControlPoints() {
@@ -95,11 +65,3 @@ function drawControlPoints() {
         ctx.fill();
     }
 }
-
-function applyDistortion() {
-    // OpenCV.js logic for perspective transformation will be added here
-    // This includes finding contours, approximating contours, ordering corners, and applying perspective transformation.
-}
-
-// Initially draw the control points
-drawControlPoints();
