@@ -3,6 +3,7 @@ const ctx = canvas.getContext('2d');
 let drawing = false;
 let storedImageData;
 let draggingControlPoint = null;
+let distortionMode = false;
 
 const controlPoints = [
     { x: 0, y: 0 },
@@ -14,10 +15,12 @@ const controlPoints = [
 canvas.addEventListener('mousedown', (e) => {
     const mouseX = e.clientX - canvas.offsetLeft;
     const mouseY = e.clientY - canvas.offsetTop;
-    const clickedPoint = getClickedControlPoint(mouseX, mouseY);
-    
-    if (clickedPoint) {
-        draggingControlPoint = clickedPoint;
+
+    if (distortionMode) {
+        const clickedPoint = getClickedControlPoint(mouseX, mouseY);
+        if (clickedPoint) {
+            draggingControlPoint = clickedPoint;
+        }
     } else {
         drawing = true;
         ctx.beginPath();
@@ -26,33 +29,41 @@ canvas.addEventListener('mousedown', (e) => {
 });
 
 canvas.addEventListener('mouseup', () => {
-    drawing = false;
-    draggingControlPoint = null;
-    storeCurrentDrawing();
-    drawControlPoints();
-    applyDistortion();
+    if (distortionMode) {
+        draggingControlPoint = null;
+        applyDistortion();
+    } else {
+        drawing = false;
+    }
 });
 
 canvas.addEventListener('mousemove', (e) => {
     const mouseX = e.clientX - canvas.offsetLeft;
     const mouseY = e.clientY - canvas.offsetTop;
-    
-    if (draggingControlPoint) {
+
+    if (distortionMode && draggingControlPoint) {
         draggingControlPoint.x = mouseX;
         draggingControlPoint.y = mouseY;
         redrawCanvas();
         drawControlPoints();
-    } else if (drawing) {
+    } else if (!distortionMode && drawing) {
         draw(e);
     }
 });
 
+canvas.addEventListener('dblclick', () => {
+    distortionMode = !distortionMode;
+    if (!distortionMode) {
+        redrawCanvas();
+    } else {
+        drawControlPoints();
+    }
+});
+
 function draw(event) {
-    if (!drawing) return;
     ctx.lineWidth = 100;
     ctx.lineCap = 'round';
     ctx.strokeStyle = 'black';
-
     ctx.lineTo(event.clientX - canvas.offsetLeft, event.clientY - canvas.offsetTop);
     ctx.stroke();
     ctx.beginPath();
@@ -97,6 +108,3 @@ function applyDistortion() {
     ];
     fx.canvas().draw(texture).perspective(canvasQuad, quad).update();
 }
-
-// Initially draw the control points
-drawControlPoints();
