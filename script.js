@@ -1,110 +1,73 @@
-const canvas = document.getElementById('artCanvas');
-const ctx = canvas.getContext('2d');
-let drawing = false;
-let storedImageData;
-let draggingControlPoint = null;
-let distortionMode = false;
+// Assuming Three.js is already included in your project
 
-const controlPoints = [
-    { x: 0, y: 0 },
-    { x: canvas.width, y: 0 },
-    { x: canvas.width, y: canvas.height },
-    { x: 0, y: canvas.height }
-];
+let scene, camera, renderer, plane, isDrawing = false, controlPoints = [], drawingTexture, textureData;
+const textureSize = 512;
 
-canvas.addEventListener('mousedown', (e) => {
-    const mouseX = e.clientX - canvas.offsetLeft;
-    const mouseY = e.clientY - canvas.offsetTop;
+function init() {
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 5;
 
-    if (distortionMode) {
-        const clickedPoint = getClickedControlPoint(mouseX, mouseY);
-        if (clickedPoint) {
-            draggingControlPoint = clickedPoint;
-        }
-    } else {
-        drawing = true;
-        ctx.beginPath();
-        ctx.moveTo(mouseX, mouseY);
+    renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // Create a plane for drawing
+    let geometry = new THREE.PlaneGeometry(5, 5);
+    textureData = new Uint8Array(textureSize * textureSize * 3);
+    drawingTexture = new THREE.DataTexture(textureData, textureSize, textureSize, THREE.RGBFormat);
+    let material = new THREE.MeshBasicMaterial({ map: drawingTexture });
+    plane = new THREE.Mesh(geometry, material);
+    scene.add(plane);
+
+    // Control points
+    for (let i = 0; i < 4; i++) {
+        let sphere = new THREE.Mesh(new THREE.SphereGeometry(0.1), new THREE.MeshBasicMaterial({ color: 0xff0000 }));
+        controlPoints.push(sphere);
+        scene.add(sphere);
     }
-});
+    positionControlPoints();
 
-canvas.addEventListener('mouseup', () => {
-    if (distortionMode) {
-        draggingControlPoint = null;
-        applyDistortion();
-    } else {
-        drawing = false;
-    }
-});
+    // Drag controls
+    let dragControls = new THREE.DragControls(controlPoints, camera, renderer.domElement);
+    dragControls.addEventListener('drag', updateDistortion);
 
-canvas.addEventListener('mousemove', (e) => {
-    const mouseX = e.clientX - canvas.offsetLeft;
-    const mouseY = e.clientY - canvas.offsetTop;
+    // Event listeners for drawing
+    renderer.domElement.addEventListener('mousedown', startDrawing);
+    renderer.domElement.addEventListener('mousemove', draw);
+    renderer.domElement.addEventListener('mouseup', stopDrawing);
 
-    if (distortionMode && draggingControlPoint) {
-        draggingControlPoint.x = mouseX;
-        draggingControlPoint.y = mouseY;
-        redrawCanvas();
-        drawControlPoints();
-    } else if (!distortionMode && drawing) {
-        draw(e);
-    }
-});
+    animate();
+}
 
-canvas.addEventListener('dblclick', () => {
-    distortionMode = !distortionMode;
-    if (!distortionMode) {
-        redrawCanvas();
-    } else {
-        drawControlPoints();
-    }
-});
+function positionControlPoints() {
+    controlPoints[0].position.set(-2.5, 2.5, 0);
+    controlPoints[1].position.set(2.5, 2.5, 0);
+    controlPoints[2].position.set(2.5, -2.5, 0);
+    controlPoints[3].position.set(-2.5, -2.5, 0);
+}
+
+function startDrawing(event) {
+    isDrawing = true;
+}
 
 function draw(event) {
-    ctx.lineWidth = 100;
-    ctx.lineCap = 'round';
-    ctx.strokeStyle = 'black';
-    ctx.lineTo(event.clientX - canvas.offsetLeft, event.clientY - canvas.offsetTop);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(event.clientX - canvas.offsetLeft, event.clientY - canvas.offsetTop);
+    if (!isDrawing) return;
+    // Logic to draw on the texture
+    drawingTexture.needsUpdate = true;
 }
 
-function storeCurrentDrawing() {
-    storedImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+function stopDrawing(event) {
+    isDrawing = false;
 }
 
-function redrawCanvas() {
-    ctx.putImageData(storedImageData, 0, 0);
+function updateDistortion() {
+    // Logic to update the plane's geometry based on control points' positions
 }
 
-function getClickedControlPoint(x, y) {
-    const tolerance = 10;
-    for (let point of controlPoints) {
-        if (Math.abs(point.x - x) < tolerance && Math.abs(point.y - y) < tolerance) {
-            return point;
-        }
-    }
-    return null;
+function animate() {
+    requestAnimationFrame(animate);
+    renderer.render(scene, camera);
 }
 
-function drawControlPoints() {
-    ctx.fillStyle = 'red';
-    for (let point of controlPoints) {
-        ctx.beginPath();
-        ctx.arc(point.x, point.y, 5, 0, 2 * Math.PI);
-        ctx.fill();
-    }
-}
-
-function applyDistortion() {
-    const texture = fx.canvas().texture(canvas);
-    const canvasQuad = [0, 0, canvas.width, 0, canvas.width, canvas.height, 0, canvas.height];
-    const quad = [
-        controlPoints[0].x, controlPoints[0].y,
-        controlPoints[1].x, controlPoints[1].y,
-        controlPoints[2].x, controlPoints[2].y,
-        controlPoints[3].x, controlPoints[3].y
-    ];
-    fx.canvas().draw(texture).perspective(canvasQuad, quad).update();
-}
+init();
