@@ -1,3 +1,74 @@
+const canvas = document.getElementById('artCanvas');
+const ctx = canvas.getContext('2d');
+let drawing = false;
+let isDistorted = false;
+let storedImageData;
+
+let draggingControlPoint = null;
+let controlPoints = [
+    { x: 0, y: 0 },
+    { x: canvas.width, y: 0 },
+    { x: canvas.width, y: canvas.height },
+    { x: 0, y: canvas.height }
+];
+
+canvas.addEventListener('mousedown', (e) => {
+    const mouseX = e.clientX - canvas.offsetLeft;
+    const mouseY = e.clientY - canvas.offsetTop;
+    const clickedPoint = getClickedControlPoint(mouseX, mouseY);
+    
+    if (clickedPoint) {
+        draggingControlPoint = clickedPoint;
+    } else if (isDistorted) {
+        distortStart(e);
+    } else {
+        drawing = true;
+    }
+});
+
+canvas.addEventListener('mouseup', () => {
+    drawing = false;
+    draggingControlPoint = null;
+    storeCurrentDrawing();
+    ctx.beginPath();
+    drawControlPoints();
+});
+
+canvas.addEventListener('mousemove', (e) => {
+    const mouseX = e.clientX - canvas.offsetLeft;
+    const mouseY = e.clientY - canvas.offsetTop;
+    
+    if (draggingControlPoint) {
+        draggingControlPoint.x = mouseX;
+        draggingControlPoint.y = mouseY;
+        drawControlPoints();
+    } else if (drawing) {
+        draw(e);
+    }
+});
+
+function draw(event) {
+    if (!drawing) return;
+    ctx.lineWidth = 50; 
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = 'black';
+
+    ctx.lineTo(event.clientX - canvas.offsetLeft, event.clientY - canvas.offsetTop);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(event.clientX - canvas.offsetLeft, event.clientY - canvas.offsetTop);
+    drawControlPoints();
+}
+
+function storeCurrentDrawing() {
+    storedImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+}
+
+function toggleDistortion() {
+    isDistorted = !isDistorted;
+    drawControlPoints();
+}
+
 function distortStart(event) {
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const data = imageData.data;
@@ -8,10 +79,8 @@ function distortStart(event) {
         for (let x = 0; x < canvas.width; x++) {
             const i = (y * canvas.width + x) * 4;
             
-            // Calculate the relative position of the point within the distorted quad
             const relPos = getRelativePosition(x, y, controlPoints);
             
-            // Bilinear interpolation
             const srcX = relPos.x * canvas.width;
             const srcY = relPos.y * canvas.height;
             const srcPixel = bilinearInterpolation(data, srcX, srcY, canvas.width, canvas.height);
@@ -27,9 +96,6 @@ function distortStart(event) {
 }
 
 function getRelativePosition(x, y, points) {
-    // Calculate the relative position of a point within a quad defined by the given control points
-    // This function will return a value between 0 and 1 for both x and y
-    // TODO: Implement the logic to calculate the relative position
     return { x: x / canvas.width, y: y / canvas.height };
 }
 
@@ -64,3 +130,24 @@ function getPixel(data, x, y, width) {
     const i = (y * width + x) * 4;
     return [data[i], data[i + 1], data[i + 2]];
 }
+
+function getClickedControlPoint(x, y) {
+    const tolerance = 10;
+    for (let point of controlPoints) {
+        if (Math.abs(point.x - x) < tolerance && Math.abs(point.y - y) < tolerance) {
+            return point;
+        }
+    }
+    return null;
+}
+
+function drawControlPoints() {
+    ctx.fillStyle = 'red';
+    for (let point of controlPoints) {
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, 5, 0, 2 * Math.PI);
+        ctx.fill();
+    }
+}
+
+drawControlPoints();
