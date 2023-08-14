@@ -1,58 +1,66 @@
-const app = new PIXI.Application({ view: document.getElementById('artCanvas') });
+function distortStart(event) {
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+    const output = ctx.createImageData(canvas.width, canvas.height);
+    const outputData = output.data;
 
-const vertexSrc = `
-attribute vec2 aVertexPosition;
-attribute vec2 aTextureCoord;
+    for (let y = 0; y < canvas.height; y++) {
+        for (let x = 0; x < canvas.width; x++) {
+            const i = (y * canvas.width + x) * 4;
+            
+            // Calculate the relative position of the point within the distorted quad
+            const relPos = getRelativePosition(x, y, controlPoints);
+            
+            // Bilinear interpolation
+            const srcX = relPos.x * canvas.width;
+            const srcY = relPos.y * canvas.height;
+            const srcPixel = bilinearInterpolation(data, srcX, srcY, canvas.width, canvas.height);
+            
+            outputData[i] = srcPixel[0];
+            outputData[i + 1] = srcPixel[1];
+            outputData[i + 2] = srcPixel[2];
+            outputData[i + 3] = 255; // alpha
+        }
+    }
 
-uniform mat3 projectionMatrix;
-
-varying vec2 vTextureCoord;
-
-void main(void) {
-    gl_Position = vec4((projectionMatrix * vec3(aVertexPosition, 1.0)).xy, 0.0, 1.0);
-    vTextureCoord = aTextureCoord;
-}
-`;
-
-const fragmentSrc = `
-precision mediump float;
-
-varying vec2 vTextureCoord;
-uniform sampler2D uSampler;
-uniform vec2 controlPoints[4];
-
-vec2 barycentricDistort(vec2 uv, vec2 a, vec2 b, vec2 c) {
-    float detT = (b.y - c.y) * (a.x - c.x) + (c.x - b.x) * (a.y - c.y);
-    float w1 = ((b.y - c.y) * (uv.x - c.x) + (c.x - b.x) * (uv.y - c.y)) / detT;
-    float w2 = ((c.y - a.y) * (uv.x - c.x) + (a.x - c.x) * (uv.y - c.y)) / detT;
-    float w3 = 1.0 - w1 - w2;
-    return w1 * a + w2 * b + w3 * c;
+    ctx.putImageData(output, 0, 0);
 }
 
-void main(void) {
-    vec2 uv = vTextureCoord;
-    uv = barycentricDistort(uv, controlPoints[0], controlPoints[1], controlPoints[2]);
-    uv = barycentricDistort(uv, controlPoints[2], controlPoints[3], controlPoints[0]);
-    gl_FragColor = texture2D(uSampler, uv);
+function getRelativePosition(x, y, points) {
+    // Calculate the relative position of a point within a quad defined by the given control points
+    // This function will return a value between 0 and 1 for both x and y
+    // TODO: Implement the logic to calculate the relative position
+    return { x: x / canvas.width, y: y / canvas.height };
 }
-`;
 
-const controlPoints = [
-    new PIXI.Point(0, 0),
-    new PIXI.Point(app.screen.width, 0),
-    new PIXI.Point(app.screen.width, app.screen.height),
-    new PIXI.Point(0, app.screen.height)
-];
+function bilinearInterpolation(data, x, y, width, height) {
+    const x1 = Math.floor(x);
+    const y1 = Math.floor(y);
+    const x2 = x1 + 1;
+    const y2 = y1 + 1;
 
-const distortionFilter = new PIXI.Filter(vertexSrc, fragmentSrc, {
-    controlPoints: controlPoints
-});
+    const f11 = getPixel(data, x1, y1, width);
+    const f12 = getPixel(data, x1, y2, width);
+    const f21 = getPixel(data, x2, y1, width);
+    const f22 = getPixel(data, x2, y2, width);
 
-const graphics = new PIXI.Graphics();
-graphics.beginFill(0xFFFFFF);
-graphics.drawRect(0, 0, app.screen.width, app.screen.height);
-graphics.endFill();
-graphics.filters = [distortionFilter];
-app.stage.addChild(graphics);
+    const r1 = ((x2 - x) / (x2 - x1)) * f11[0] + ((x - x1) / (x2 - x1)) * f21[0];
+    const r2 = ((x2 - x) / (x2 - x1)) * f12[0] + ((x - x1) / (x2 - x1)) * f22[0];
 
-// TODO: Add drawing and interaction logic here
+    const g1 = ((x2 - x) / (x2 - x1)) * f11[1] + ((x - x1) / (x2 - x1)) * f21[1];
+    const g2 = ((x2 - x) / (x2 - x1)) * f12[1] + ((x - x1) / (x2 - x1)) * f22[1];
+
+    const b1 = ((x2 - x) / (x2 - x1)) * f11[2] + ((x - x1) / (x2 - x1)) * f21[2];
+    const b2 = ((x2 - x) / (x2 - x1)) * f12[2] + ((x - x1) / (x2 - x1)) * f22[2];
+
+    const r = ((y2 - y) / (y2 - y1)) * r1 + ((y - y1) / (y2 - y1)) * r2;
+    const g = ((y2 - y) / (y2 - y1)) * g1 + ((y - y1) / (y2 - y1)) * g2;
+    const b = ((y2 - y) / (y2 - y1)) * b1 + ((y - y1) / (y2 - y1)) * b2;
+
+    return [r, g, b];
+}
+
+function getPixel(data, x, y, width) {
+    const i = (y * width + x) * 4;
+    return [data[i], data[i + 1], data[i + 2]];
+}
