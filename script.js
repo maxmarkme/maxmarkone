@@ -99,3 +99,4 @@ function applyDistortion() {
 
 // Initially draw the control points
 drawControlPoints();
+
