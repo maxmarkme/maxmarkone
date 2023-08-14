@@ -1,6 +1,7 @@
 const canvas = document.getElementById('artCanvas');
 const ctx = canvas.getContext('2d');
 let drawing = false;
+let storedImageData;
 let draggingControlPoint = null;
 
 const controlPoints = [
@@ -10,13 +11,8 @@ const controlPoints = [
     { x: 0, y: canvas.height }
 ];
 
-// Create a temporary canvas to store the original drawing
-const tempCanvas = document.createElement('canvas');
-tempCanvas.width = canvas.width;
-tempCanvas.height = canvas.height;
-const tempCtx = tempCanvas.getContext('2d');
-
 canvas.addEventListener('mousedown', (e) => {
+    hideTitle();
     const mouseX = e.clientX - canvas.offsetLeft;
     const mouseY = e.clientY - canvas.offsetTop;
     const clickedPoint = getClickedControlPoint(mouseX, mouseY);
@@ -33,7 +29,8 @@ canvas.addEventListener('mousedown', (e) => {
 canvas.addEventListener('mouseup', () => {
     drawing = false;
     draggingControlPoint = null;
-    tempCtx.drawImage(canvas, 0, 0);  // Store the current drawing on the temporary canvas
+    storeCurrentDrawing();
+    drawControlPoints();
     applyDistortion();
 });
 
@@ -44,7 +41,8 @@ canvas.addEventListener('mousemove', (e) => {
     if (draggingControlPoint) {
         draggingControlPoint.x = mouseX;
         draggingControlPoint.y = mouseY;
-        applyDistortion();
+        redrawCanvas();
+        drawControlPoints();
     } else if (drawing) {
         draw(e);
     }
@@ -52,7 +50,7 @@ canvas.addEventListener('mousemove', (e) => {
 
 function draw(event) {
     if (!drawing) return;
-    ctx.lineWidth = 50;
+    ctx.lineWidth = 5;
     ctx.lineCap = 'round';
     ctx.strokeStyle = 'black';
 
@@ -60,6 +58,19 @@ function draw(event) {
     ctx.stroke();
     ctx.beginPath();
     ctx.moveTo(event.clientX - canvas.offsetLeft, event.clientY - canvas.offsetTop);
+}
+
+function hideTitle() {
+    const title = document.querySelector('h1');
+    title.style.display = 'none';
+}
+
+function storeCurrentDrawing() {
+    storedImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+}
+
+function redrawCanvas() {
+    ctx.putImageData(storedImageData, 0, 0);
 }
 
 function getClickedControlPoint(x, y) {
@@ -72,16 +83,6 @@ function getClickedControlPoint(x, y) {
     return null;
 }
 
-function applyDistortion() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);  // Clear the main canvas
-    ctx.drawImage(tempCanvas, 0, 0);  // Draw the original drawing from the temporary canvas onto the main canvas
-
-    // Apply the distortion based on the control points' positions
-    // [Your distortion logic here]
-
-    drawControlPoints();  // Redraw the control points
-}
-
 function drawControlPoints() {
     ctx.fillStyle = 'red';
     for (let point of controlPoints) {
@@ -91,5 +92,10 @@ function drawControlPoints() {
     }
 }
 
-// Initialize the canvas by drawing the control points
+function applyDistortion() {
+    // This is where the distortion logic should be applied to the entire canvas content.
+    // Consider using a reliable library or method for perspective distortion here.
+}
+
+// Initially draw the control points
 drawControlPoints();
