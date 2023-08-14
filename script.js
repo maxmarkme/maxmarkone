@@ -27,6 +27,9 @@ canvas.addEventListener('mousemove', (e) => {
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.lineWidth = 50; 
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = 'black';
     ctx.beginPath();
     for (let point of points) {
         ctx.lineTo(point.x, point.y);
