@@ -1,102 +1,46 @@
-const canvas = document.getElementById('artCanvas');
-const ctx = canvas.getContext('2d');
-let drawing = false;
-let storedImageData;
-let draggingControlPoint = null;
+let canvas = new fabric.Canvas('artCanvas');
+let isDrawing = false;
 
-const controlPoints = [
-    { x: 0, y: 0 },
-    { x: canvas.width, y: 0 },
-    { x: canvas.width, y: canvas.height },
-    { x: 0, y: canvas.height }
-];
-
-canvas.addEventListener('mousedown', (e) => {
-    hideTitle();
-    const mouseX = e.clientX - canvas.offsetLeft;
-    const mouseY = e.clientY - canvas.offsetTop;
-    const clickedPoint = getClickedControlPoint(mouseX, mouseY);
-    
-    if (clickedPoint) {
-        draggingControlPoint = clickedPoint;
-    } else {
-        drawing = true;
-        ctx.beginPath();
-        ctx.moveTo(mouseX, mouseY);
-    }
+canvas.on('mouse:down', function(options) {
+    isDrawing = true;
+    canvas.isDrawingMode = true;
+    canvas.freeDrawingBrush.width = 50;
+    canvas.freeDrawingBrush.color = "#000000";
 });
 
-canvas.addEventListener('mouseup', () => {
-    drawing = false;
-    draggingControlPoint = null;
-    storeCurrentDrawing();
-    drawControlPoints();
+canvas.on('mouse:up', function(options) {
+    isDrawing = false;
+    canvas.isDrawingMode = false;
     applyDistortion();
 });
 
-canvas.addEventListener('mousemove', (e) => {
-    const mouseX = e.clientX - canvas.offsetLeft;
-    const mouseY = e.clientY - canvas.offsetTop;
-    
-    if (draggingControlPoint) {
-        draggingControlPoint.x = mouseX;
-        draggingControlPoint.y = mouseY;
-        redrawCanvas();
-        drawControlPoints();
-    } else if (drawing) {
-        draw(e);
-    }
-});
+// Add control points
+let controlPoint1 = new fabric.Circle({ radius: 5, fill: 'red', left: 10, top: 10, hasBorders: false, hasControls: false });
+let controlPoint2 = new fabric.Circle({ radius: 5, fill: 'red', left: canvas.width - 10, top: 10, hasBorders: false, hasControls: false });
+let controlPoint3 = new fabric.Circle({ radius: 5, fill: 'red', left: canvas.width - 10, top: canvas.height - 10, hasBorders: false, hasControls: false });
+let controlPoint4 = new fabric.Circle({ radius: 5, fill: 'red', left: 10, top: canvas.height - 10, hasBorders: false, hasControls: false });
 
-function draw(event) {
-    if (!drawing) return;
-    ctx.lineWidth = 5;
-    ctx.lineCap = 'round';
-    ctx.strokeStyle = 'black';
+canvas.add(controlPoint1, controlPoint2, controlPoint3, controlPoint4);
 
-    ctx.lineTo(event.clientX - canvas.offsetLeft, event.clientY - canvas.offsetTop);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(event.clientX - canvas.offsetLeft, event.clientY - canvas.offsetTop);
-}
-
-function hideTitle() {
-    const title = document.querySelector('h1');
-    title.style.display = 'none';
-}
-
-function storeCurrentDrawing() {
-    storedImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-}
-
-function redrawCanvas() {
-    ctx.putImageData(storedImageData, 0, 0);
-}
-
-function getClickedControlPoint(x, y) {
-    const tolerance = 10;
-    for (let point of controlPoints) {
-        if (Math.abs(point.x - x) < tolerance && Math.abs(point.y - y) < tolerance) {
-            return point;
-        }
-    }
-    return null;
-}
-
-function drawControlPoints() {
-    ctx.fillStyle = 'red';
-    for (let point of controlPoints) {
-        ctx.beginPath();
-        ctx.arc(point.x, point.y, 5, 0, 2 * Math.PI);
-        ctx.fill();
-    }
-}
-
+// Logic to distort the drawing based on control points
 function applyDistortion() {
-    // This is where the distortion logic should be applied to the entire canvas content.
-    // Consider using a reliable library or method for perspective distortion here.
+    // This is a basic distortion effect. It's not perfect, but it's a start.
+    let scaleX = controlPoint2.left / canvas.width;
+    let scaleY = controlPoint3.top / canvas.height;
+    canvas.getObjects().forEach(obj => {
+        if (obj !== controlPoint1 && obj !== controlPoint2 && obj !== controlPoint3 && obj !== controlPoint4) {
+            obj.scaleX = scaleX;
+            obj.scaleY = scaleY;
+            obj.setCoords();
+        }
+    });
+    canvas.renderAll();
 }
 
-// Initially draw the control points
-drawControlPoints();
+function saveDrawing() {
+    // Placeholder for save drawing logic
+}
 
+function postToSocialMedia() {
+    // Placeholder for post to social media logic
+}
