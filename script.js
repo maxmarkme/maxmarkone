@@ -88,17 +88,33 @@ function drawControlPoints() {
 }
 
 function applyDistortion() {
+    // Store the current drawing
+    let srcImage = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    let tempCanvas = document.createElement('canvas');
+    tempCanvas.width = canvas.width;
+    tempCanvas.height = canvas.height;
+    tempCanvas.getContext('2d').putImageData(srcImage, 0, 0);
+
+    // Define source and destination triangles for transformation
     let srcTri = cv.matFromArray(4, 1, cv.CV_32FC2, 
         [0, 0, canvas.width, 0, canvas.width, canvas.height, 0, canvas.height]);
     let dstTri = cv.matFromArray(4, 1, cv.CV_32FC2, 
         [controlPoints[0].x, controlPoints[0].y, controlPoints[1].x, controlPoints[1].y, 
         controlPoints[2].x, controlPoints[2].y, controlPoints[3].x, controlPoints[3].y]);
+    
+    // Compute the perspective transformation matrix
     let warpMat = cv.getPerspectiveTransform(srcTri, dstTri);
     let dsize = new cv.Size(canvas.width, canvas.height);
-    let src = cv.imread(canvas);
+    let src = cv.imread(tempCanvas);
     let dst = new cv.Mat();
+
+    // Apply the perspective transformation
     cv.warpPerspective(src, dst, warpMat, dsize, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
+
+    // Display the transformed drawing on the main canvas
     cv.imshow(canvas, dst);
+
+    // Clean up
     src.delete();
     dst.delete();
     warpMat.delete();
