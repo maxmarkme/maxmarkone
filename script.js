@@ -1,5 +1,5 @@
-const canvas = document.getElementById('artCanvas');
-const ctx = canvas.getContext('2d');
+let canvas = document.getElementById('artCanvas');
+let ctx = canvas.getContext('2d');
 let drawing = false;
 let storedImageData;
 let draggingControlPoint = null;
@@ -11,15 +11,14 @@ const controlPoints = [
     { x: 0, y: canvas.height }
 ];
 
+function onOpenCvReady() {
+    document.getElementById('status').innerHTML = 'OpenCV.js is ready.';
+}
+
 canvas.addEventListener('mousedown', (e) => {
     hideTitle();
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-
-    const mouseX = (e.clientX - rect.left) * scaleX;
-    const mouseY = (e.clientY - rect.top) * scaleY;
-
+    const mouseX = e.clientX - canvas.offsetLeft;
+    const mouseY = e.clientY - canvas.offsetTop;
     const clickedPoint = getClickedControlPoint(mouseX, mouseY);
     
     if (clickedPoint) {
@@ -31,40 +30,76 @@ canvas.addEventListener('mousedown', (e) => {
     }
 });
 
-// ... [rest of the event listeners]
+canvas.addEventListener('mouseup', () => {
+    drawing = false;
+    draggingControlPoint = null;
+    storeCurrentDrawing();
+    drawControlPoints();
+    applyDistortion();
+});
+
+canvas.addEventListener('mousemove', (e) => {
+    const mouseX = e.clientX - canvas.offsetLeft;
+    const mouseY = e.clientY - canvas.offsetTop;
+    
+    if (draggingControlPoint) {
+        draggingControlPoint.x = mouseX;
+        draggingControlPoint.y = mouseY;
+        redrawCanvas();
+        drawControlPoints();
+    } else if (drawing) {
+        draw(e);
+    }
+});
 
 function draw(event) {
     if (!drawing) return;
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-
-    const x = (event.clientX - rect.left) * scaleX;
-    const y = (event.clientY - rect.top) * scaleY;
-
     ctx.lineWidth = 50;
     ctx.lineCap = 'round';
     ctx.strokeStyle = 'black';
 
-    ctx.lineTo(x, y);
+    ctx.lineTo(event.clientX - canvas.offsetLeft, event.clientY - canvas.offsetTop);
     ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(x, y);
+    ctx.moveTo(event.clientX - canvas.offsetLeft, event.clientY - canvas.offsetTop);
 }
 
-// ... [rest of the functions]
+function hideTitle() {
+    const title = document.querySelector('h1');
+    title.style.display = 'none';
+}
+
+function storeCurrentDrawing() {
+    storedImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+}
+
+function redrawCanvas() {
+    ctx.putImageData(storedImageData, 0, 0);
+}
+
+function getClickedControlPoint(x, y) {
+    const tolerance = 10;
+    for (let point of controlPoints) {
+        if (Math.abs(point.x - x) < tolerance && Math.abs(point.y - y) < tolerance) {
+            return point;
+        }
+    }
+    return null;
+}
+
+function drawControlPoints() {
+    ctx.fillStyle = 'red';
+    for (let point of controlPoints) {
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, 5, 0, 2 * Math.PI);
+        ctx.fill();
+    }
+}
 
 function applyDistortion() {
-    // Use a geometric perspective distortion approach here
-    // This will require a more advanced algorithm or library to achieve
-    // For now, the fx.canvas() method is a placeholder
-    const texture = fx.canvas().texture(canvas);
-    const canvasQuad = [0, 0, canvas.width, 0, canvas.width, canvas.height, 0, canvas.height];
-    const quad = [
-        controlPoints[0].x, controlPoints[0].y,
-        controlPoints[1].x, controlPoints[1].y,
-        controlPoints[2].x, controlPoints[2].y,
-        controlPoints[3].x, controlPoints[3].y
-    ];
-    fx.canvas().draw(texture).perspective(canvasQuad, quad).update();
+    // OpenCV.js logic for perspective transformation will be added here
+    // This includes finding contours, approximating contours, ordering corners, and applying perspective transformation.
 }
+
+// Initially draw the control points
+drawControlPoints();
