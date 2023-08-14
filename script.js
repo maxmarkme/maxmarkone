@@ -39,6 +39,7 @@ canvas.addEventListener('mousemove', (e) => {
     if (draggingControlPoint) {
         draggingControlPoint.x = mouseX;
         draggingControlPoint.y = mouseY;
+        redrawCanvas();
         drawControlPoints();
     } else if (drawing) {
         draw(e);
@@ -46,7 +47,6 @@ canvas.addEventListener('mousemove', (e) => {
 });
 
 function draw(event) {
-    if (!drawing) return;
     ctx.lineWidth = 5; 
     ctx.lineCap = 'round';
     ctx.strokeStyle = 'black';
@@ -59,6 +59,10 @@ function draw(event) {
 
 function storeCurrentDrawing() {
     storedImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+}
+
+function redrawCanvas() {
+    ctx.putImageData(storedImageData, 0, 0);
 }
 
 function getClickedControlPoint(x, y) {
@@ -78,13 +82,6 @@ function drawControlPoints() {
         ctx.arc(point.x, point.y, 5, 0, 2 * Math.PI);
         ctx.fill();
     }
-}
-
-// Bilinear interpolation for distortion
-function applyDistortion() {
-    // Here, we'll calculate the transformation matrix based on control points
-    // and apply it to the canvas to achieve the distortion effect.
-    // This requires a more advanced approach and might use a library like transformation-matrix.
 }
 
 // Initially draw the control points
