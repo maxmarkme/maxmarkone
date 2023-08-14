@@ -1,8 +1,10 @@
 const canvas = document.getElementById('artCanvas');
 const ctx = canvas.getContext('2d');
 let drawing = false;
-let points = [];
-let controlPoints = [
+let storedImageData;
+let draggingControlPoint = null;
+
+const controlPoints = [
     { x: 0, y: 0 },
     { x: canvas.width, y: 0 },
     { x: canvas.width, y: canvas.height },
@@ -10,32 +12,69 @@ let controlPoints = [
 ];
 
 canvas.addEventListener('mousedown', (e) => {
-    drawing = true;
-    points.push({ x: e.clientX - canvas.offsetLeft, y: e.clientY - canvas.offsetTop });
+    const mouseX = e.clientX - canvas.offsetLeft;
+    const mouseY = e.clientY - canvas.offsetTop;
+    const clickedPoint = getClickedControlPoint(mouseX, mouseY);
+    
+    if (clickedPoint) {
+        draggingControlPoint = clickedPoint;
+    } else {
+        drawing = true;
+        ctx.beginPath();
+        ctx.moveTo(mouseX, mouseY);
+    }
 });
 
 canvas.addEventListener('mouseup', () => {
     drawing = false;
+    draggingControlPoint = null;
+    storeCurrentDrawing();
+    drawControlPoints();
+    applyDistortion();
 });
 
 canvas.addEventListener('mousemove', (e) => {
-    if (drawing) {
-        points.push({ x: e.clientX - canvas.offsetLeft, y: e.clientY - canvas.offsetTop });
-        draw();
+    const mouseX = e.clientX - canvas.offsetLeft;
+    const mouseY = e.clientY - canvas.offsetTop;
+    
+    if (draggingControlPoint) {
+        draggingControlPoint.x = mouseX;
+        draggingControlPoint.y = mouseY;
+        redrawCanvas();
+        drawControlPoints();
+    } else if (drawing) {
+        draw(e);
     }
 });
 
-function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.lineWidth = 50; 
+function draw(event) {
+    if (!drawing) return;
+    ctx.lineWidth = 50;
     ctx.lineCap = 'round';
     ctx.strokeStyle = 'black';
+
+    ctx.lineTo(event.clientX - canvas.offsetLeft, event.clientY - canvas.offsetTop);
+    ctx.stroke();
     ctx.beginPath();
-    for (let point of points) {
-        ctx.lineTo(point.x, point.y);
-        ctx.stroke();
+    ctx.moveTo(event.clientX - canvas.offsetLeft, event.clientY - canvas.offsetTop);
+}
+
+function storeCurrentDrawing() {
+    storedImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+}
+
+function redrawCanvas() {
+    ctx.putImageData(storedImageData, 0, 0);
+}
+
+function getClickedControlPoint(x, y) {
+    const tolerance = 10;
+    for (let point of controlPoints) {
+        if (Math.abs(point.x - x) < tolerance && Math.abs(point.y - y) < tolerance) {
+            return point;
+        }
     }
-    drawControlPoints();
+    return null;
 }
 
 function drawControlPoints() {
@@ -47,9 +86,16 @@ function drawControlPoints() {
     }
 }
 
-function resetCanvas() {
-    points = [];
-    draw();
+function applyDistortion() {
+    const texture = fx.canvas().texture(canvas);
+    const canvasQuad = [0, 0, canvas.width, 0, canvas.width, canvas.height, 0, canvas.height];
+    const quad = [
+        controlPoints[0].x, controlPoints[0].y,
+        controlPoints[1].x, controlPoints[1].y,
+        controlPoints[2].x, controlPoints[2].y,
+        controlPoints[3].x, controlPoints[3].y
+    ];
+    fx.canvas().draw(texture).perspective(canvasQuad, quad).update();
 }
 
 // Initially draw the control points
