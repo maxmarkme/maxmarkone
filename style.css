@@ -1,59 +1,36 @@
-const app = new PIXI.Application({ view: document.getElementById('artCanvas') });
-
-const vertexSrc = `
-attribute vec2 aVertexPosition;
-attribute vec2 aTextureCoord;
-
-uniform mat3 projectionMatrix;
-
-varying vec2 vTextureCoord;
-
-void main(void) {
-    gl_Position = vec4((projectionMatrix * vec3(aVertexPosition, 1.0)).xy, 0.0, 1.0);
-    vTextureCoord = aTextureCoord;
-}
-`;
-
-const fragmentSrc = `
-precision mediump float;
-
-varying vec2 vTextureCoord;
-uniform sampler2D uSampler;
-uniform vec2 controlPoints[4];
-
-vec2 distort(vec2 uv, vec2 controlPoint) {
-    float dist = distance(uv, controlPoint);
-    if (dist < 0.1) {
-        return uv + (controlPoint - uv) * (0.1 - dist) * 10.0;
-    }
-    return uv;
+body {
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    background-color: #2b2f3a;
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    color: white;
+    position: relative;
 }
 
-void main(void) {
-    vec2 uv = vTextureCoord;
-    for (int i = 0; i < 4; i++) {
-        uv = distort(uv, controlPoints[i]);
-    }
-    gl_FragColor = texture2D(uSampler, uv);
+canvas {
+    background-color: white;
+    position: relative;
+    margin-top: 20px;
 }
-`;
 
-const controlPoints = [
-    new PIXI.Point(0, 0),
-    new PIXI.Point(app.screen.width, 0),
-    new PIXI.Point(app.screen.width, app.screen.height),
-    new PIXI.Point(0, app.screen.height)
-];
+h1 {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    z-index: 1;
+}
 
-const distortionFilter = new PIXI.Filter(vertexSrc, fragmentSrc, {
-    controlPoints: controlPoints
-});
+p {
+    text-align: center;
+    margin-bottom: 20px;
+}
 
-const graphics = new PIXI.Graphics();
-graphics.beginFill(0xFFFFFF);
-graphics.drawRect(0, 0, app.screen.width, app.screen.height);
-graphics.endFill();
-graphics.filters = [distortionFilter];
-app.stage.addChild(graphics);
-
-// TODO: Add drawing and interaction logic here
+button {
+    margin-top: 10px;
+}
