@@ -3,17 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Three.js Drawing Canvas</title>
-    <style>
-        body { margin: 0; }
-        canvas { display: block; }
-    </style>
+    <title>Max Mark</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/glfx.js/1.0.0/glfx.js"></script>
 </head>
 <body>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script>
-        // Three.js code will go here
-    </script>
+    <h1>SET YOUR MARK</h1>
+    <p>Draw on the image below and save, share, and own your masterpiece!</p>
+    <canvas id="artCanvas" width="500" height="500"></canvas>
+    <br>
+    <button onclick="saveDrawing()">Save Drawing</button>
+    <button onclick="postToSocialMedia()">Post to Social Media</button>
+    <script src="script.js"></script>
 </body>
 </html>
 
