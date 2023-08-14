@@ -1,30 +1,59 @@
-const canvas = document.getElementById('artCanvas');
-const ctx = canvas.getContext('2d');
-let drawing = false;
-let isDistorted = false;
-let storedImageData;
+const app = new PIXI.Application({ view: document.getElementById('artCanvas') });
 
-let draggingControlPoint = null;
-let controlPoints = [
-    { x: 0, y: 0 },
-    { x: canvas.width, y: 0 },
-    { x: canvas.width, y: canvas.height },
-    { x: 0, y: canvas.height }
+const vertexSrc = `
+attribute vec2 aVertexPosition;
+attribute vec2 aTextureCoord;
+
+uniform mat3 projectionMatrix;
+
+varying vec2 vTextureCoord;
+
+void main(void) {
+    gl_Position = vec4((projectionMatrix * vec3(aVertexPosition, 1.0)).xy, 0.0, 1.0);
+    vTextureCoord = aTextureCoord;
+}
+`;
+
+const fragmentSrc = `
+precision mediump float;
+
+varying vec2 vTextureCoord;
+uniform sampler2D uSampler;
+uniform vec2 controlPoints[4];
+
+vec2 distort(vec2 uv, vec2 controlPoint) {
+    float dist = distance(uv, controlPoint);
+    if (dist < 0.1) {
+        return uv + (controlPoint - uv) * (0.1 - dist) * 10.0;
+    }
+    return uv;
+}
+
+void main(void) {
+    vec2 uv = vTextureCoord;
+    for (int i = 0; i < 4; i++) {
+        uv = distort(uv, controlPoints[i]);
+    }
+    gl_FragColor = texture2D(uSampler, uv);
+}
+`;
+
+const controlPoints = [
+    new PIXI.Point(0, 0),
+    new PIXI.Point(app.screen.width, 0),
+    new PIXI.Point(app.screen.width, app.screen.height),
+    new PIXI.Point(0, app.screen.height)
 ];
 
-canvas.addEventListener('mousedown', (e) => {
-    document.querySelector('h1').style.display = 'none'; // Hide the title
-    const mouseX = e.clientX - canvas.offsetLeft;
-    const mouseY = e.clientY - canvas.offsetTop;
-    const clickedPoint = getClickedControlPoint(mouseX, mouseY);
-    
-    if (clickedPoint) {
-        draggingControlPoint = clickedPoint;
-    } else if (isDistorted) {
-        distortStart(e);
-    } else {
-        drawing = true;
-    }
+const distortionFilter = new PIXI.Filter(vertexSrc, fragmentSrc, {
+    controlPoints: controlPoints
 });
 
-// ... [Rest of the provided JavaScript code]
+const graphics = new PIXI.Graphics();
+graphics.beginFill(0xFFFFFF);
+graphics.drawRect(0, 0, app.screen.width, app.screen.height);
+graphics.endFill();
+graphics.filters = [distortionFilter];
+app.stage.addChild(graphics);
+
+// TODO: Add drawing and interaction logic here
