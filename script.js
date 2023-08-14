@@ -1,33 +1,30 @@
-const app = new PIXI.Application({ width: 500, height: 500, backgroundColor: 0xFFFFFF });
-document.getElementById('pixiCanvas').appendChild(app.view);
-
+let canvas = new fabric.Canvas('artCanvas');
 let isDrawing = false;
-let graphics = new PIXI.Graphics();
-app.stage.addChild(graphics);
+let group;
 
-app.view.addEventListener('mousedown', startDrawing);
-app.view.addEventListener('mousemove', draw);
-app.view.addEventListener('mouseup', endDrawing);
+canvas.isDrawingMode = true;
+canvas.freeDrawingBrush.width = 50;
+canvas.freeDrawingBrush.color = "#000000";
 
-function startDrawing(e) {
-    isDrawing = true;
-    graphics.lineStyle(50, 0x000000, 1);
-    graphics.moveTo(e.offsetX, e.offsetY);
+canvas.on('path:created', function() {
+    if (group) {
+        canvas.remove(group);
+    }
+    let paths = canvas.getObjects('path');
+    group = new fabric.Group(paths, {
+        cornerColor: 'red',
+        borderColor: 'red',
+        cornerSize: 10,
+        transparentCorners: false,
+    });
+    canvas.add(group);
+    paths.forEach(path => canvas.remove(path));
+});
+
+function saveDrawing() {
+    // Placeholder for save drawing logic
 }
 
-function draw(e) {
-    if (!isDrawing) return;
-    graphics.lineTo(e.offsetX, e.offsetY);
-    graphics.moveTo(e.offsetX, e.offsetY);
-    graphics.endFill();
+function postToSocialMedia() {
+    // Placeholder for post to social media logic
 }
-
-function endDrawing() {
-    isDrawing = false;
-}
-
-// Placeholder functions
-function saveDrawing() {}
-function postToSocialMedia() {}
-
-// TODO: Implement the perspective distortion effect using PIXI's capabilities.
