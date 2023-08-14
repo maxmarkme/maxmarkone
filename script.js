@@ -1,5 +1,5 @@
-let canvas = document.getElementById('artCanvas');
-let ctx = canvas.getContext('2d');
+const canvas = document.getElementById('artCanvas');
+const ctx = canvas.getContext('2d');
 let drawing = false;
 let draggingControlPoint = null;
 
@@ -10,16 +10,15 @@ const controlPoints = [
     { x: 0, y: canvas.height }
 ];
 
-function initialize() {
-    canvas.addEventListener('mousedown', onMouseDown);
-    canvas.addEventListener('mousemove', onMouseMove);
-    canvas.addEventListener('mouseup', onMouseUp);
-    drawControlPoints();
-}
+// Create a temporary canvas to store the original drawing
+const tempCanvas = document.createElement('canvas');
+tempCanvas.width = canvas.width;
+tempCanvas.height = canvas.height;
+const tempCtx = tempCanvas.getContext('2d');
 
-function onMouseDown(event) {
-    const mouseX = event.clientX - canvas.offsetLeft;
-    const mouseY = event.clientY - canvas.offsetTop;
+canvas.addEventListener('mousedown', (e) => {
+    const mouseX = e.clientX - canvas.offsetLeft;
+    const mouseY = e.clientY - canvas.offsetTop;
     const clickedPoint = getClickedControlPoint(mouseX, mouseY);
     
     if (clickedPoint) {
@@ -29,43 +28,38 @@ function onMouseDown(event) {
         ctx.beginPath();
         ctx.moveTo(mouseX, mouseY);
     }
-}
+});
 
-function onMouseMove(event) {
-    const mouseX = event.clientX - canvas.offsetLeft;
-    const mouseY = event.clientY - canvas.offsetTop;
+canvas.addEventListener('mouseup', () => {
+    drawing = false;
+    draggingControlPoint = null;
+    tempCtx.drawImage(canvas, 0, 0);  // Store the current drawing on the temporary canvas
+    applyDistortion();
+});
 
+canvas.addEventListener('mousemove', (e) => {
+    const mouseX = e.clientX - canvas.offsetLeft;
+    const mouseY = e.clientY - canvas.offsetTop;
+    
     if (draggingControlPoint) {
         draggingControlPoint.x = mouseX;
         draggingControlPoint.y = mouseY;
-        redrawCanvas();
-        drawControlPoints();
-    } else if (drawing) {
-        draw(event);
-    }
-}
-
-function onMouseUp(event) {
-    drawing = false;
-    if (draggingControlPoint) {
         applyDistortion();
-        draggingControlPoint = null;
+    } else if (drawing) {
+        draw(e);
     }
-}
+});
 
 function draw(event) {
+    if (!drawing) return;
     ctx.lineWidth = 50;
     ctx.lineCap = 'round';
     ctx.strokeStyle = 'black';
+
     ctx.lineTo(event.clientX - canvas.offsetLeft, event.clientY - canvas.offsetTop);
     ctx.stroke();
     ctx.beginPath();
     ctx.moveTo(event.clientX - canvas.offsetLeft, event.clientY - canvas.offsetTop);
-}
-
-function redrawCanvas() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawControlPoints();
 }
 
 function getClickedControlPoint(x, y) {
@@ -78,6 +72,16 @@ function getClickedControlPoint(x, y) {
     return null;
 }
 
+function applyDistortion() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);  // Clear the main canvas
+    ctx.drawImage(tempCanvas, 0, 0);  // Draw the original drawing from the temporary canvas onto the main canvas
+
+    // Apply the distortion based on the control points' positions
+    // [Your distortion logic here]
+
+    drawControlPoints();  // Redraw the control points
+}
+
 function drawControlPoints() {
     ctx.fillStyle = 'red';
     for (let point of controlPoints) {
@@ -87,38 +91,5 @@ function drawControlPoints() {
     }
 }
 
-function applyDistortion() {
-    // Store the current drawing
-    let srcImage = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    let tempCanvas = document.createElement('canvas');
-    tempCanvas.width = canvas.width;
-    tempCanvas.height = canvas.height;
-    tempCanvas.getContext('2d').putImageData(srcImage, 0, 0);
-
-    // Define source and destination triangles for transformation
-    let srcTri = cv.matFromArray(4, 1, cv.CV_32FC2, 
-        [0, 0, canvas.width, 0, canvas.width, canvas.height, 0, canvas.height]);
-    let dstTri = cv.matFromArray(4, 1, cv.CV_32FC2, 
-        [controlPoints[0].x, controlPoints[0].y, controlPoints[1].x, controlPoints[1].y, 
-        controlPoints[2].x, controlPoints[2].y, controlPoints[3].x, controlPoints[3].y]);
-    
-    // Compute the perspective transformation matrix
-    let warpMat = cv.getPerspectiveTransform(srcTri, dstTri);
-    let dsize = new cv.Size(canvas.width, canvas.height);
-    let src = cv.imread(tempCanvas);
-    let dst = new cv.Mat();
-
-    // Apply the perspective transformation
-    cv.warpPerspective(src, dst, warpMat, dsize, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
-
-    // Display the transformed drawing on the main canvas
-    cv.imshow(canvas, dst);
-
-    // Clean up
-    src.delete();
-    dst.delete();
-    warpMat.delete();
-}
-
-// Initialize the canvas
-initialize();
+// Initialize the canvas by drawing the control points
+drawControlPoints();
