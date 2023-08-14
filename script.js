@@ -12,6 +12,7 @@ const controlPoints = [
 ];
 
 canvas.addEventListener('mousedown', (e) => {
+    hideTitle();
     const mouseX = e.clientX - canvas.offsetLeft;
     const mouseY = e.clientY - canvas.offsetTop;
     const clickedPoint = getClickedControlPoint(mouseX, mouseY);
@@ -59,6 +60,11 @@ function draw(event) {
     ctx.moveTo(event.clientX - canvas.offsetLeft, event.clientY - canvas.offsetTop);
 }
 
+function hideTitle() {
+    const title = document.querySelector('h1');
+    title.style.display = 'none';
+}
+
 function storeCurrentDrawing() {
     storedImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 }
@@ -89,14 +95,3 @@ function drawControlPoints() {
 function applyDistortion() {
     const texture = fx.canvas().texture(canvas);
     const canvasQuad = [0, 0, canvas.width, 0, canvas.width, canvas.height, 0, canvas.height];
-    const quad = [
-        controlPoints[0].x, controlPoints[0].y,
-        controlPoints[1].x, controlPoints[1].y,
-        controlPoints[2].x, controlPoints[2].y,
-        controlPoints[3].x, controlPoints[3].y
-    ];
-    fx.canvas().draw(texture).perspective(canvasQuad, quad).update();
-}
-
-// Initially draw the control points
-drawControlPoints();
